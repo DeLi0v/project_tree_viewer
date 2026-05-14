@@ -1,32 +1,70 @@
-# Пример использования
-## Размеры файлов
+# 🌳 Project Tree Viewer
+
+A lightweight CLI + GUI tool for visualizing project directory structure with filtering, sizes, colors, and export options.
+
+---
+
+## 🚀 Features
+
+- CLI and GUI support
+- Ignore system like `.gitignore`
+- `.treeconfig` support
+- File size display
+- Colored output
+- Extension filtering
+- Markdown export
+- Safe recursive traversal
+
+---
+
+## 📦 Installation
+
+```bash
+pip install -r requirements.txt
 ```
-python tree.py --sizes
+---
+
+## ▶️ CLI Usage
+
+```python
+python main.py .
 ```
 
-## Цветной вывод
-```
-python tree.py --color
+### Options
+
+```bash
+--sizes        Show file sizes
+--color        Enable colored output
+--only py,js   Filter extensions
+--depth 3      Limit depth
+--format md    Markdown output
 ```
 
-## Всё вместе
-```
-python tree.py . --sizes --color
+---
+
+## 🖥 GUI Usage
+
+```python
+python gui.py
 ```
 
-Только Python файлы
-python tree.py --only py
-Несколько расширений
-python tree.py --only py,js,ts
-Markdown экспорт
-python tree.py --format md
-Всё вместе
-python tree.py . --only py --sizes --color --format md
+---
 
-Пример вывода (md)
-project
-├── src
-│   ├── main.py
-│   └── utils.py
-├── data
-└── README.md
+## ⚙️ Config
+
+### .treeconfig
+
+```json
+{
+  "exclude_dirs": ["node_modules", ".git"],
+  "exclude_files": [".env"]
+}
+```
+
+### .treeignore
+
+```json
+*.log
+__pycache__
+dist/
+```

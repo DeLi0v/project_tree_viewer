@@ -100,6 +100,7 @@ def build_tree(
         return
 
     filtered_items = []
+
     for item in items:
         path = os.path.join(root_path, item)
         relative = os.path.relpath(path, base_path) if base_path else item
@@ -110,26 +111,27 @@ def build_tree(
         if ignore_patterns and is_ignored(item, relative, ignore_patterns):
             continue
 
-        filtered_items.append(item)
+        if os.path.isfile(path) and only_ext:
+            ext = os.path.splitext(item)[1].lstrip(".").lower()
+            if ext not in only_ext:
+                continue
 
-    for index, item in enumerate(filtered_items):
-        path = os.path.join(root_path, item)
+        filtered_items.append((item, path, relative))
+
+    for index, (item, path, relative) in enumerate(filtered_items):
+        is_last = index == len(filtered_items) - 1
+
         if os.path.isfile(path):
             if only_ext:
                 ext = os.path.splitext(item)[1].lstrip(".").lower()
                 if ext not in only_ext:
                     continue
 
-        relative = os.path.relpath(path, base_path) if base_path else item
-        is_last = index == len(filtered_items) - 1
-
         connector = "└── " if is_last else "├── "
         display_name = item
 
-        # Цвет
         display_name = colorize(display_name, os.path.isdir(path), use_color)
 
-        # Размер
         if show_sizes and os.path.isfile(path):
             try:
                 size = os.path.getsize(path)
@@ -139,10 +141,7 @@ def build_tree(
 
         line = prefix + connector + display_name
 
-        if output_format == "md":
-            print(line)
-        else:
-            print(line)
+        print(line)
 
         if os.path.isdir(path):
             extension = "    " if is_last else "│   "
@@ -252,7 +251,8 @@ def main():
 
     if args.output:
         import sys
-        sys.stdout = open(args.output, "w", encoding="utf-8")
+        with open(args.output, "w", encoding="utf-8") as f:
+            sys.stdout = f
 
     if args.format == "md":
         print("```")

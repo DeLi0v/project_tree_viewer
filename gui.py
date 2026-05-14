@@ -6,6 +6,7 @@ from tkinter import filedialog, messagebox
 import threading
 import sys
 import io
+import contextlib
 
 # импорт твоей логики
 import core
@@ -16,6 +17,7 @@ class TreeApp:
         self.root = root
         self.root.title("Project Tree Viewer")
         self.root.geometry("800x600")
+        self.lock = threading.Lock()
 
         # ===== ПУТЬ =====
         path_frame = tk.Frame(root)
@@ -70,7 +72,6 @@ class TreeApp:
             self.path_var.set(path)
 
     def run(self):
-        self.lock = threading.Lock()
         threading.Thread(target=self.generate_tree).start()
 
     def generate_tree(self):
@@ -81,7 +82,7 @@ class TreeApp:
             only = self.only_entry.get()
             depth = self.depth_entry.get()
 
-            only_ext = core.parse_extensions(only)
+            only_ext = core.parse_extensions(only.strip() if only else "")
             depth = int(depth) if depth else None
 
             config = core.load_config(path)
@@ -90,45 +91,31 @@ class TreeApp:
             exclude_dirs = set(config.get("exclude_dirs", []))
             exclude_files = set(config.get("exclude_files", []))
 
-            # перехват stdout
             buffer = io.StringIO()
-            old_stdout = sys.stdout
-            sys.stdout = buffer
 
-            try:
+            with self.lock:
+                with contextlib.redirect_stdout(buffer):
 
-                root_name = os.path.basename(os.path.abspath(path)) or path
+                    root_name = os.path.basename(os.path.abspath(path))
+                    print(root_name)
 
-                if self.md_var.get():
-                    print("```")
-
-                print(root_name)
-
-                core.build_tree(
-                    path,
-                    exclude_dirs,
-                    exclude_files,
-                    ignore_patterns,
-                    path,
-                    depth,
-                    show_sizes=self.sizes_var.get(),
-                    use_color=self.color_var.get(),
-                    only_ext=only_ext,
-                    output_format="md" if self.md_var.get() else "tree"
-                )
-
-                if self.md_var.get():
-                    print("```")
-
-                sys.stdout = sys.__stdout__
-            finally:
-                sys.stdout = old_stdout
+                    core.build_tree(
+                        path,
+                        exclude_dirs,
+                        exclude_files,
+                        ignore_patterns,
+                        path,
+                        depth,
+                        show_sizes=self.sizes_var.get(),
+                        use_color=self.color_var.get(),
+                        only_ext=only_ext,
+                        output_format="md" if self.md_var.get() else "tree"
+                    )
 
             result = buffer.getvalue()
             self.text.insert(tk.END, result)
 
         except Exception as e:
-            sys.stdout = sys.__stdout__
             messagebox.showerror("Error", str(e))
 
     def save(self):
