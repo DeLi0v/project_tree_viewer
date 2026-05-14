@@ -60,6 +60,11 @@ def colorize(name, is_dir, use_color):
     else:
         return name
 
+def parse_extensions(arg):
+    if not arg:
+        return None
+    return set(ext.strip().lower().lstrip(".") for ext in arg.split(","))
+
 # ============================
 # BUILD TREE
 # ============================
@@ -74,7 +79,9 @@ def build_tree(
     prefix="",
     current_depth=0,
     show_sizes=False,
-    use_color=False
+    use_color=False,
+    only_ext=None,
+    output_format="tree"
 ):
     relative = os.path.relpath(path, base_path) if base_path else item
 
@@ -97,6 +104,11 @@ def build_tree(
         filtered_items.append(item)
 
     for index, item in enumerate(filtered_items):
+        if only_ext and os.path.isfile(path):
+            ext = os.path.splitext(item)[1].lstrip(".").lower()
+            if ext not in only_ext:
+                continue
+
         path = os.path.join(root_path, item)
         is_last = index == len(filtered_items) - 1
 
@@ -114,7 +126,12 @@ def build_tree(
             except Exception:
                 display_name += " (?)"
 
-        print(prefix + connector + display_name)
+        line = prefix + connector + display_name
+
+        if output_format == "md":
+            print(line)
+        else:
+            print(line)
 
         if os.path.isdir(path):
             extension = "    " if is_last else "│   "
@@ -147,6 +164,7 @@ def main():
 
     config = load_config(args.path)
     ignore_patterns = load_ignore_patterns(args.path)
+    only_ext = parse_extensions(args.only)
 
     parser = argparse.ArgumentParser(
         description="Project structure viewer"
@@ -192,6 +210,18 @@ def main():
         help="Enable colored output"
     )
 
+    parser.add_argument(
+        "--only",
+        help="Show only specific file extensions (e.g. py,js,ts)"
+    )
+
+    parser.add_argument(
+        "--format",
+        choices=["tree", "md"],
+        default="tree",
+        help="Output format"
+    )
+
     args = parser.parse_args()
 
     exclude_dirs = parse_list(args.exclude_dirs) or set(config.get("exclude_dirs", [])) or {
@@ -212,7 +242,12 @@ def main():
         import sys
         sys.stdout = open(args.output, "w", encoding="utf-8")
 
-    print(args.path)
+    if args.format == "md":
+        print("```")
+
+    root_name = os.path.basename(os.path.abspath(args.path))
+    print(root_name if root_name else ".")
+    
     build_tree(
         args.path,
         exclude_dirs,
@@ -221,8 +256,13 @@ def main():
         args.path,
         args.depth,
         show_sizes=args.sizes,
-        use_color=args.color
+        use_color=args.color,
+        only_ext=only_ext,
+        output_format=args.format
     )
+
+    if args.format == "md":
+        print("```")
 
 
 if __name__ == "__main__":
