@@ -1,8 +1,12 @@
+# core.py
+
 import os
 import argparse
 import json
 import fnmatch
 from colorama import Fore, Style, init
+
+init(autoreset=True)
 
 # ============================
 # CONFIG 
@@ -83,10 +87,11 @@ def build_tree(
     only_ext=None,
     output_format="tree"
 ):
-    relative = os.path.relpath(path, base_path) if base_path else item
-
     if max_depth is not None and current_depth > max_depth:
         return
+    
+    exclude_dirs = exclude_dirs or set()
+    exclude_files = exclude_files or set()
 
     try:
         items = sorted(os.listdir(root_path))
@@ -96,20 +101,26 @@ def build_tree(
 
     filtered_items = []
     for item in items:
+        path = os.path.join(root_path, item)
+        relative = os.path.relpath(path, base_path) if base_path else item
+
         if item in exclude_dirs or item in exclude_files:
             continue
 
         if ignore_patterns and is_ignored(item, relative, ignore_patterns):
             continue
+
         filtered_items.append(item)
 
     for index, item in enumerate(filtered_items):
-        if only_ext and os.path.isfile(path):
-            ext = os.path.splitext(item)[1].lstrip(".").lower()
-            if ext not in only_ext:
-                continue
-
         path = os.path.join(root_path, item)
+        if os.path.isfile(path):
+            if only_ext:
+                ext = os.path.splitext(item)[1].lstrip(".").lower()
+                if ext not in only_ext:
+                    continue
+
+        relative = os.path.relpath(path, base_path) if base_path else item
         is_last = index == len(filtered_items) - 1
 
         connector = "└── " if is_last else "├── "
@@ -145,7 +156,9 @@ def build_tree(
                 prefix + extension,
                 current_depth + 1,
                 show_sizes,
-                use_color
+                use_color,
+                only_ext,
+                output_format
             )
 
 
@@ -160,11 +173,6 @@ def parse_list(arg):
 
 
 def main():
-    init(autoreset=True)
-
-    config = load_config(args.path)
-    ignore_patterns = load_ignore_patterns(args.path)
-    only_ext = parse_extensions(args.only)
 
     parser = argparse.ArgumentParser(
         description="Project structure viewer"
@@ -223,6 +231,10 @@ def main():
     )
 
     args = parser.parse_args()
+
+    config = load_config(args.path)
+    ignore_patterns = load_ignore_patterns(args.path)
+    only_ext = parse_extensions(args.only)
 
     exclude_dirs = parse_list(args.exclude_dirs) or set(config.get("exclude_dirs", [])) or {
         ".git",
