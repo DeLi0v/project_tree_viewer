@@ -130,6 +130,9 @@ def build_tree(
         connector = "└── " if is_last else "├── "
         display_name = item
 
+        if os.path.isdir(path):
+            display_name += "/"
+
         display_name = colorize(display_name, os.path.isdir(path), use_color)
 
         if show_sizes and os.path.isfile(path):

@@ -1,5 +1,9 @@
 *.log
 *.tmp
 .env
+.venv
+build/*
 dist/*
 __pycache__
+.treeconfig
+.treeignore
