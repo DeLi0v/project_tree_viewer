@@ -1,0 +1,4 @@
+{
+  "exclude_dirs": ["node_modules", ".git", "venv"],
+  "exclude_files": [".env"]
+}

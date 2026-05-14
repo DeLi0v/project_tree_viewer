@@ -1,0 +1,5 @@
+*.log
+*.tmp
+.env
+dist/*
+__pycache__
