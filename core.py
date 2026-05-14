@@ -5,6 +5,7 @@ import argparse
 import json
 import fnmatch
 from colorama import Fore, Style, init
+import sys
 
 init(autoreset=True)
 
@@ -57,6 +58,10 @@ def format_size(size):
 
 def colorize(name, is_dir, use_color):
     if not use_color:
+        return name
+
+    # защита от GUI/redirect/pipe
+    if not sys.stdout.isatty():
         return name
 
     if is_dir:

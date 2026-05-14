@@ -107,7 +107,7 @@ class TreeApp:
                         path,
                         depth,
                         show_sizes=self.sizes_var.get(),
-                        use_color=self.color_var.get(),
+                        use_color=False,
                         only_ext=only_ext,
                         output_format="md" if self.md_var.get() else "tree"
                     )
