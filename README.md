@@ -63,7 +63,7 @@ python gui.py
 
 ### .treeignore
 
-```json
+```
 *.log
 __pycache__
 dist/
